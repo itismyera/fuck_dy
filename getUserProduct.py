@@ -5,6 +5,7 @@ import requests
 import random
 import time
 import urllib3
+from emoji import emojize
 
 downloadNum = 1
 
@@ -29,11 +30,21 @@ def fabu_time(t):
     fabu_time = time.strftime("%Y-%m-%d %H:%M:%S", timeArray)
     return fabu_time
 
+def replaceIllegalStr(file_name):
+    '''
+    传入文件名
+    :param file_name:
+    :return:
+    '''
+    file_name = file_name.replace('\U0001f9cd\u200d', '')
+    return file_name
+
 
 def save(dict, isFav = False):
     '''
-    传入字典保存数据
+    传入字典保存数据和是否下载喜好
     :param dict:
+    :param ifFav:
     :return:
     '''
     # 有些作品中没有标题导致我们再保存数据时会覆盖，所以我们对没有标题的作品进行命名
@@ -63,24 +74,37 @@ def save(dict, isFav = False):
     downloadNum = downloadNum + 1
     res = requests.get(video_url)
     file_name = os.getcwd() + '/' + dict['user_name']
+    file_name = replaceIllegalStr(file_name)
     if isFav:
         file_name = os.getcwd() + '/myFav'
         name = '({})'.format(dict['user_name']) + name
-
+    file_full_name = file_name + '/' + name
+    file_full_name = replaceIllegalStr(file_full_name)
     if os.path.exists(file_name):
-        file_full_name = file_name + '/' + name
-        if os.path.exists(file_full_name) == False:
+        
+        # if os.path.exists(file_full_name) == False:
+        #     with open(file_full_name, 'wb') as f:
+        #        if res.status_code == 200 :
+        #         f.write(res.content)
+        #         print('{}下载完成！'.format(name + '_' + num))
+        # else:
+        #     print('{}下载完成！'.format(name + '_' + num))
+        try:
             with open(file_full_name, 'wb') as f:
-               if res.status_code == 200 :
+                if res.status_code == 200 :
+                    f.write(res.content)
+                    print('{}下载完成！'.format(name + '_' + num))
+        except:
+            print('{}非法文件名！'.format(name + '_' + num))
+
+    else:
+        try:
+            os.mkdir(file_name)
+            with open(file_full_name, 'wb') as f:
                 f.write(res.content)
                 print('{}下载完成！'.format(name + '_' + num))
-        else:
-            print('{}下载完成！'.format(name + '_' + num))
-    else:
-        os.mkdir(file_name)
-        with open(file_name + '/' + name, 'wb') as f:
-            f.write(res.content)
-            print('{}下载完成！'.format(name + '_' + num))
+        except:
+            print('{}非法文件名！'.format(name + '_' + num))
 
 
 def get_data(url):
@@ -280,10 +304,13 @@ def user_get_fav(sec_uid):
 
 
 if __name__ == '__main__':
+    useType = 2 # 1自己 2用户
     # sec_uid = 'MS4wLjABAAAAHShW_CsDWiWB59O6hv0RwcuJPqRIyYBICu9UKkFXdWQ'
     # sec_uid = 'MS4wLjABAAAA5bpWWQit_7aDyCm_dZAGQEfTOvlbA4mPNlHJ35xiEqA'
-    # sec_uid = 'MS4wLjABAAAAIgmXP7gW82z3RAes7bxy6s66g4SpWx5FDvCy5aaRyyw' #mine
-    sec_uid = 'MS4wLjABAAAAjdO6PCEKv2NQHza5hmz1aAO0UdxDbncpyH-JMCBB6fI' #胖娘
-
-    user_get(sec_uid)
-
+    if useType  == 1:
+        sec_uid = 'MS4wLjABAAAAIgmXP7gW82z3RAes7bxy6s66g4SpWx5FDvCy5aaRyyw' #mine
+        user_get_fav(sec_uid)
+    else:
+        sec_uid = 'MS4wLjABAAAALa6D0qFS02UZ08owGBDbHiZc6qqhsGztM3nRrIseP6I' #可可
+        # sec_uid = 'MS4wLjABAAAAjdO6PCEKv2NQHza5hmz1aAO0UdxDbncpyH-JMCBB6fI' #胖娘
+        user_get(sec_uid)
